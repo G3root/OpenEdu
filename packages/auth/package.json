@@ -1,0 +1,13 @@
+{
+  "name": "@open-edu/auth",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "sideEffects": false,
+  "dependencies": {
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@open-edu/db": "workspace:*",
+    "next-auth": "^4.22.1",
+    "nodemailer": "^6.9.3"
+  }
+}
