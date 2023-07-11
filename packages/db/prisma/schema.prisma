@@ -2,10 +2,117 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["jsonProtocol"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// The owners of the SaaS (you) can have a SUPERADMIN role to access all data
+enum GlobalRole {
+  USER
+  SUPERADMIN
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String?
+  email          String?        @unique
+  role           GlobalRole     @default(USER)
+  emailVerified  DateTime?
+  image          String?
+  accounts       Account[]
+  sessions       Session[]
+  memberships    Membership[]   @relation("members")
+  invitedMembers Membership[]   @relation("inviter")
+  organizations  Organization[]
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id         String       @id @default(cuid())
+  name       String
+  slug       String
+  creatorId  String
+  creator    User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  membership Membership[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  TEACHER
+  STUDENT
+  GUEST
+}
+
+model Membership {
+  id   String   @id @default(cuid())
+  role UserRole @default(GUEST)
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  status InvitationStatus @default(PENDING)
+
+  user   User?   @relation(fields: [userId], references: [id], name: "members")
+  userId String?
+
+  inviter   String
+  invitedBy User   @relation(fields: [inviter], references: [id], name: "inviter")
+
+  // When the user joins, we will clear out the name and email and set the user.
+  invitedName  String?
+  invitedEmail String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  joinedAt  DateTime?
+
+  @@unique([organizationId, invitedEmail])
+}
+
+enum InvitationStatus {
+  ACCEPTED
+  PENDING
+  DECLINED
 }
