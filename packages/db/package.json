@@ -1,0 +1,11 @@
+{
+  "name": "@open-edu/db",
+  "version": "0.0.0",
+  "private": true,
+  "devDependencies": {
+    "prisma": "^4.16.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.16.2"
+  }
+}
